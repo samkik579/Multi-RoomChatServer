@@ -6,6 +6,8 @@
     <script type="text/javascript">
 
         var socketio = io.connect();
+        console.log("Connected!");
+
         socketio.on("message_to_client", function (data) {
             //Append an HR thematic break and the escaped HTML of the new message
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
@@ -13,13 +15,12 @@
         });
 
         function sendMessage() {
-            var msg = document.getElementById("message_input").value;
+            var msg = { user: "nodesource", text: document.getElementById("message_input").value };
             socketio.emit("message_to_server", { message: msg });
         }
 
-        function createChatRoom() {
-            var socket = io.connect();
-            socket.emit('create', 'rooma');
+        socketio.on("create_room", function (socket) {
+            socketio.emit('createRoom', 'rooma');
         }
 
     </script>
@@ -27,10 +28,11 @@
 
 <body>
     <input type="text" id="message_input" />
-    <button onclick="sendMessage()">send</button>
+    <button onclick="sendMessage()">Send Message</button>
     <div id="chatlog"></div>
 
-    <input type="button" id="create_room" />
+
+    <input type="textß" id="create_room" />
     <button onclick="sendMessage()">Create Room</button>
     <div id="roomcreation"></div>
 </body>

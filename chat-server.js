@@ -19,23 +19,16 @@ app.listen(3456);
 // Do the Socket.IO magic:
 var io = socketio.listen(app);
 io.sockets.on("connection", function (socket) {
+    console.log("connected");
     // This callback runs when a new Socket.IO connection is established.
-    console.log('a user connected');
-
-    socket.on('disconnect', function () {
-        console.log('user disconnected');
-    });
-
-    socket.on('create', function (room) {
-        // This callback should run when the client creates a new room
-        socket.join(room);
-        io.sockets.in(room).emit('event', data);
-    });
-
+    socket.on('disconnect', function () { });
     socket.on('message_to_server', function (data) {
         // This callback runs when the server receives a new message from the client.
 
         console.log("message: " + data["message"]); // log it to the Node.JS output
-        io.sockets.emit("message_to_client", { message: data["message"] }) // broadcast the message to other users
+        io.sockets.on('say to someone', function (id, message) {
+            io.sockets.to(id).emit("message_to_client", { message: data["message"] }) // broadcast the message to other users
+        });
+
     });
-});
+}); g
