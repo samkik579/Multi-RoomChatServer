@@ -17,13 +17,22 @@
             socketio.emit("message_to_server", { message: msg });
         }
 
+        function createChatRoom() {
+            var socket = io.connect();
+            socket.emit('create', 'rooma');
+        }
+
     </script>
 </head>
 
 <body>
-    <input type=text" id="message_input" />
+    <input type="text" id="message_input" />
     <button onclick="sendMessage()">send</button>
     <div id="chatlog"></div>
+
+    <input type="button" id="create_room" />
+    <button onclick="sendMessage()">Create Room</button>
+    <div id="roomcreation"></div>
 </body>
 
-</html> e
+</html>
