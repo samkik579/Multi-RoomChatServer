@@ -23,23 +23,43 @@ app.listen(3456);
 var io = socketio.listen(app);
 
 var usernames = {};
+var rooms = {};
+
+function roomobject(roomname, password) {
+    this.users = {};
+    this.roomname = roomname;
+    this.password = password;
+}
+
+let lobby = new roomobject("lobby");
 
 io.sockets.on("connection", function (socket) {
     // This callback runs when a new Socket.IO connection is established.
     console.log("user connected ", socket.id);
+    socket.join(lobby.roomname);
 
     socket.on('message_to_server', function (data) {
         // This callback runs when the server receives a new message from the client.
-        console.log("message: " + socket.id + data["message"]); // log it to the Node.JS output
-        io.sockets.emit("message_to_client", { message: data["message"] }) // broadcast the message to other users
+        console.log("message " + data["username"] + ": " + data["message"]); // log it to the Node.JS output
+        io.to(data.currroom).emit("message_to_client", { message: data["message"], username: data["username"] }) // broadcast the message to other users
     });
 
     // client emits updateusers
-    socket.on('updateusers', function (usernames) {
-        socket.username = username;
-        usernames[username] = username;
-        io.sockets.emit('message_to_client', socket.id + ' has joined the chat');
+    socket.on('username_to_server', function (data) {
+        console.log("New user has logged in " + data.username);
+        socket.nickname = data["username"]
+        usernames[socket.id] = data["username"];
+        lobby.users[socket.id] = data["username"];
+        io.sockets.emit('username_to_client', { message: data["username"] });
     });
+
+    socket.on('newroom_to_server', function (data) {
+        let newroom = new roomobject(data['roomname']);
+        newroom.users[socket.id] = data['username'];
+        newroom.roomname = roomname;
+        socket.join(newroom.roomname);
+        io.to(newroom.roomname).emit('newroom_to_client', { roomname: data["newroom.roomname"], users: newroom.users })
+    })
 
     socket.on('disconnect', function () {
         delete usernames[socket.id];

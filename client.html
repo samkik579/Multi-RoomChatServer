@@ -6,24 +6,33 @@
     <script type="text/javascript">
 
         var socketio = io.connect();
+        var username = " ";
+        var currentroom = "lobby";
+
 
         console.log("Connected!");
-        socket.emit('updateusers', prompt("What's your name?"));
-
-        socket.on('updatechat', function (username, data) {
-            $('#conversation').append('<b>' + socket.id + ':</b> ' + data + '<br>');
-        });
-
-        socketio.on("message_to_client", function (data) {
-            //Append an HR thematic break and the escaped HTML of the new message
-            document.getElementById("chatlog").appendChild(document.createElement("hr"));
-            document.getElementById("chatlog").appendChild(document.createTextNode(data['message']));
-        });
 
         function sendMessage() {
             var msg = document.getElementById("message_input").value;
-            socketio.emit("message_to_server", { message: msg });
+            socketio.emit("message_to_server", { message: msg, username: username, currroom: currentroom });
         };
+
+        socketio.on("username_to_client", function (data) {
+            document.getElementById("usernamelog").appendChild(document.createTextNode(data['message']));
+        });
+
+        function sendUsername() {
+            username = document.getElementById("username_input").value;
+            socketio.emit("username_to_server", { username: username });
+
+        };
+
+        socketio.on("message_to_client", function (data) {
+            console.log(data['message']);
+            //Append an HR thematic break and the escaped HTML of the new message
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data['username'] + ": " + data['message']));
+        });
 
 
 
@@ -34,6 +43,10 @@
     <input type="text" id="message_input" />
     <button onclick="sendMessage()">Send Message</button>
     <div id="chatlog"></div>
+
+    <input type="text" id="username_input" />
+    <button onclick="sendUsername()">Enter Username</button>
+    <div id="userlog"></div>
 </body>
 
 </html>
