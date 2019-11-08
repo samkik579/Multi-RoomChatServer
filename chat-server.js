@@ -15,20 +15,37 @@ var app = http.createServer(function (req, resp) {
         resp.end(data);
     });
 });
+
+let userlist = [];
+
 app.listen(3456);
 // Do the Socket.IO magic:
 var io = socketio.listen(app);
+
+var usernames = {};
+
 io.sockets.on("connection", function (socket) {
-    console.log("connected");
     // This callback runs when a new Socket.IO connection is established.
-    socket.on('disconnect', function () { });
+    console.log("user connected ", socket.id);
+
     socket.on('message_to_server', function (data) {
         // This callback runs when the server receives a new message from the client.
-
-        console.log("message: " + data["message"]); // log it to the Node.JS output
-        io.sockets.on('say to someone', function (id, message) {
-            io.sockets.to(id).emit("message_to_client", { message: data["message"] }) // broadcast the message to other users
-        });
-
+        console.log("message: " + socket.id + data["message"]); // log it to the Node.JS output
+        io.sockets.emit("message_to_client", { message: data["message"] }) // broadcast the message to other users
     });
-}); g
+
+    // client emits updateusers
+    socket.on('updateusers', function (usernames) {
+        socket.username = username;
+        usernames[username] = username;
+        io.sockets.emit('message_to_client', socket.id + ' has joined the chat');
+    });
+
+    socket.on('disconnect', function () {
+        delete usernames[socket.id];
+        console.log('message_to_client', socket.id + ' has left the chat');
+    });
+
+});
+
+
