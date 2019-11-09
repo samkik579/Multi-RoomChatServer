@@ -26,6 +26,19 @@
             socketio.emit("username_to_server", { username: username });
 
         };
+        function sendNewRoom() {
+            newroom = document.getElementById("newroom_input");
+            console.log(newroom);
+            socketio.emit("newroom_to_server", { roomname: newroom });
+        };
+
+        socketio.on("newroom_to_client", function (data) {
+            console.log("Roomname" + data["roomname"]);
+            console.log("Users" + data["users"]);
+            document.getElementById("newroomlog").appendChild(document.createTextNode(data["roomname"]));
+        });
+
+
 
         socketio.on("message_to_client", function (data) {
             console.log(data['message']);
@@ -47,6 +60,10 @@
     <input type="text" id="username_input" />
     <button onclick="sendUsername()">Enter Username</button>
     <div id="userlog"></div>
+
+    <input type="text" id="newroom_input" />
+    <button onclick="sendNewRoom()">Enter Room Name</button>
+    <div id="newroomlog"></div>
 </body>
 
 </html>

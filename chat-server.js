@@ -25,10 +25,10 @@ var io = socketio.listen(app);
 var usernames = {};
 var rooms = {};
 
-function roomobject(roomname, password) {
+function roomobject(roomname) {
     this.users = {};
     this.roomname = roomname;
-    this.password = password;
+    //this.password = password;
 }
 
 let lobby = new roomobject("lobby");
@@ -54,9 +54,12 @@ io.sockets.on("connection", function (socket) {
     });
 
     socket.on('newroom_to_server', function (data) {
-        let newroom = new roomobject(data['roomname']);
-        newroom.users[socket.id] = data['username'];
-        newroom.roomname = roomname;
+        let newroom = new roomobject(data["roomname"]);
+        newroom.users[socket.id] = data["username"];
+        console.log(newroom.users[socket.id]);
+
+        console.log(newroom.roomname);
+
         socket.join(newroom.roomname);
         io.to(newroom.roomname).emit('newroom_to_client', { roomname: data["newroom.roomname"], users: newroom.users })
     })
