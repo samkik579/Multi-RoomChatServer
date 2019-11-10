@@ -47,22 +47,19 @@ io.sockets.on("connection", function (socket) {
     // client emits updateusers
     socket.on('username_to_server', function (data) {
         console.log("New user has logged in " + data.username);
-        socket.nickname = data["username"]
+        socket.nickname = data["username"];
+        //console.log(socket.nickname);
         usernames[socket.id] = data["username"];
-        lobby.users[socket.id] = data["username"];
-        io.sockets.emit('username_to_client', { message: data["username"] });
+        //lobby.users[socket.id] = data["username"];
+        io.to(data.currroom).emit('username_to_client', { username: socket.nickname });
     });
 
     socket.on('newroom_to_server', function (data) {
-        let newroom = new roomobject(data["roomname"]);
-        newroom.users[socket.id] = data["username"];
-        console.log(newroom.users[socket.id]);
-
-        console.log(newroom.roomname);
-
+        let newroom = new roomobject(data["newroom"]);
+        newroom.users[socket.id] = usernames[socket.id];
         socket.join(newroom.roomname);
-        io.to(newroom.roomname).emit('newroom_to_client', { roomname: data["newroom.roomname"], users: newroom.users })
-    })
+        io.to(newroom.roomname).emit('newroom_to_client', { roomname: newroom.roomname, users: newroom.users });
+    });
 
     socket.on('disconnect', function () {
         delete usernames[socket.id];
