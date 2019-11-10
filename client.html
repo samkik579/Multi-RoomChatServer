@@ -17,19 +17,15 @@
             socketio.emit("message_to_server", { message: msg, username: username, currroom: currentroom });
         };
 
-        socketio.on("username_to_client", function (data) {
-            document.getElementById("usernamelog").appendChild(document.createTextNode(data['message']));
-        });
-
         function sendUsername() {
             username = document.getElementById("username_input").value;
             socketio.emit("username_to_server", { username: username });
 
         };
+
         function sendNewRoom() {
-            newroom = document.getElementById("newroom_input");
-            console.log(newroom);
-            socketio.emit("newroom_to_server", { roomname: newroom });
+            newroom = document.getElementById("newroom_input").value;
+            socketio.emit("newroom_to_server", { newroom: newroom });
         };
 
         socketio.on("newroom_to_client", function (data) {
@@ -38,10 +34,13 @@
             document.getElementById("newroomlog").appendChild(document.createTextNode(data["roomname"]));
         });
 
-
+        socketio.on('username_to_client', function (data) {
+            document.getElementById("userlog").appendChild(document.createTextNode("hello"));
+            console.log("heh" + data['username']);
+            document.getElementById("userlog").appendChild(document.createTextNode(data['username']));
+        });
 
         socketio.on("message_to_client", function (data) {
-            console.log(data['message']);
             //Append an HR thematic break and the escaped HTML of the new message
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode(data['username'] + ": " + data['message']));
