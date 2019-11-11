@@ -28,6 +28,7 @@ class Roomobject {
         this.users = [];
         this.roomname = roomname;
         this.creator = username;
+        this.banned = [];
         //this.password = password;
     }
 }
@@ -83,6 +84,25 @@ io.sockets.on("connection", function (socket) {
         io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: joinroom.users });
 
     })
+
+    socket.on('ban_to_server', function (data) {
+        console.log("ban to server recieved");
+        let banroom;
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].roomname === socket.room) {
+                banroom = rooms[i];
+            }
+        }
+        banroom.banned.push(data["banned"]);
+        data["banned"].leave(socket.room);
+        for (let i = 0; i < banroom.users.length; i++) {
+            if (banroom.users[i] == data["banned"]) {
+                banroom.users.splice(i, 1);
+            }
+        }
+        io.to(socket.room).emit('ban_to_client', { roomname: socket.room, banneduser: data["banned"] });
+    });
+
 
     socket.on('disconnect', function () {
         delete usernames[socket.id];

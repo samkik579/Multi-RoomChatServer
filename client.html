@@ -21,6 +21,10 @@
         function sendUsername() {
             username = document.getElementById("username_input").value;
             console.log("currentRoom = " + currentroom);
+            document.getElementById("userlog").style.display = 'none';
+            document.getElementById("newroomlog").style.display = 'block';
+            document.getElementById("joinroomlog").style.display = 'block';
+            document.getElementById("sendmessage").style.display = 'block';
             socketio.emit("username_to_server", { username: username, currentroom: currentroom });
 
         };
@@ -29,6 +33,7 @@
             console.log("sending to new room");
             let newroom = document.getElementById("newroom_input").value;
             currentroom = newroom;
+            document.getElementById("banlog").style.display = 'block';
             socketio.emit("newroom_to_server", { username: username, newroom: newroom });
         };
 
@@ -39,6 +44,12 @@
             socketio.emit("joinroom_to_server", { username: username, joinroom: joinroom });
         };
 
+        function sendBan() {
+            console.log("sending you to ban a person");
+            let banned = document.getElementById("ban_input").value;
+            socketio.emit("ban_to_server", { username: username, banned: banned })
+        }
+
         socketio.on("newroom_to_client", function (data) {
             console.log("Roomname" + data["roomname"]);
             console.log("Users" + data["users"]);
@@ -48,13 +59,17 @@
         socketio.on("joinroom_to_client", function (data) {
             console.log("Roomname" + data["roomname"]);
             console.log("Users" + data["users"]);
+            document.getElementById("joinroomlog").innerHTML = "";
             document.getElementById("joinroomlog").appendChild(document.createTextNode(data["roomname"] + data["users"]));
         })
 
+        socketio.on("ban_to_client", function (data) {
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["banneduser"] + "has been banned from " + data["roomname"]));
+        });
+
         socketio.on('username_to_client', function (data) {
-            document.getElementById("userlog").appendChild(document.createTextNode("New user: " + data['username']));
-            document.getElementById("userlog").appendChild(document.createElement("hr"));
-            document.getElementById("userlog").appendChild(document.createTextNode("All users: " + data['currusers']));
+            document.getElementById("chatlog").appendChild(document.createTextNode("New user: " + data['username']));
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
         });
 
         socketio.on("message_to_client", function (data) {
@@ -69,21 +84,31 @@
 </head>
 
 <body>
-    <input type="text" id="message_input" />
-    <button onclick="sendMessage()">Send Message</button>
-    <div id="chatlog"></div>
 
-    <input type="text" id="username_input" />
-    <button onclick="sendUsername()">Enter Username</button>
-    <div id="userlog"></div>
+    <div id="chatlog">
+        <input type="text" id="message_input" />
+        <button id=sendmessage onclick="sendMessage()" style="display: none">Send Message</button>
+    </div>
 
-    <input type="text" id="newroom_input" />
-    <button onclick="sendNewRoom()">Enter Room Name</button>
-    <div id="newroomlog"></div>
+    <div id="userlog" style="display:block">
+        <input type="text" id="username_input" />
+        <button onclick="sendUsername()">Enter Username</button>
+    </div>
 
-    <input type="text" id="joinroom_input" />
-    <button onclick="sendJoinRoom()">Enter Room You Want to Join</button>
-    <div id="joinroomlog"></div>
+    <div id="newroomlog" style="display:none">
+        <input type="text" id="newroom_input" />
+        <button onclick="sendNewRoom()">Enter Room Name</button>
+    </div>
+
+    <div id="joinroomlog" style="display: none">
+        <input type="text" id="joinroom_input" />
+        <button onclick="sendJoinRoom()">Enter Room You Want to Join</button>
+    </div>
+
+    <div id="banlog" style="display: none">
+        <input type="text" id="ban_input" placeholder="Name of Individ" />
+        <button onclick="sendBan()">Enter Individual You Want to Ban</button>
+    </div>
 </body>
 
 </html>
