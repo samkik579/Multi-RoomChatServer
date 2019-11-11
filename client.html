@@ -7,6 +7,7 @@
 
         var socketio = io.connect();
         var username = " ";
+        var id = " ";
         var currentroom = "lobby";
 
 
@@ -14,30 +15,46 @@
 
         function sendMessage() {
             var msg = document.getElementById("message_input").value;
-            socketio.emit("message_to_server", { message: msg, username: username, currroom: currentroom });
+            socketio.emit("message_to_server", { message: msg, username: username, currentroom: currentroom });
         };
 
         function sendUsername() {
             username = document.getElementById("username_input").value;
-            socketio.emit("username_to_server", { username: username });
+            console.log("currentRoom = " + currentroom);
+            socketio.emit("username_to_server", { username: username, currentroom: currentroom });
 
         };
 
         function sendNewRoom() {
-            newroom = document.getElementById("newroom_input").value;
-            socketio.emit("newroom_to_server", { newroom: newroom });
+            console.log("sending to new room");
+            let newroom = document.getElementById("newroom_input").value;
+            currentroom = newroom;
+            socketio.emit("newroom_to_server", { username: username, newroom: newroom });
+        };
+
+        function sendJoinRoom() {
+            console.log("sending you to join a room");
+            let joinroom = document.getElementById("joinroom_input").value;
+            currentroom = joinroom;
+            socketio.emit("joinroom_to_server", { username: username, joinroom: joinroom });
         };
 
         socketio.on("newroom_to_client", function (data) {
             console.log("Roomname" + data["roomname"]);
             console.log("Users" + data["users"]);
-            document.getElementById("newroomlog").appendChild(document.createTextNode(data["roomname"]));
+            document.getElementById("newroomlog").appendChild(document.createTextNode(data["roomname"] + data["users"]));
         });
 
+        socketio.on("joinroom_to_client", function (data) {
+            console.log("Roomname" + data["roomname"]);
+            console.log("Users" + data["users"]);
+            document.getElementById("joinroomlog").appendChild(document.createTextNode(data["roomname"] + data["users"]));
+        })
+
         socketio.on('username_to_client', function (data) {
-            document.getElementById("userlog").appendChild(document.createTextNode("hello"));
-            console.log("heh" + data['username']);
-            document.getElementById("userlog").appendChild(document.createTextNode(data['username']));
+            document.getElementById("userlog").appendChild(document.createTextNode("New user: " + data['username']));
+            document.getElementById("userlog").appendChild(document.createElement("hr"));
+            document.getElementById("userlog").appendChild(document.createTextNode("All users: " + data['currusers']));
         });
 
         socketio.on("message_to_client", function (data) {
@@ -63,6 +80,10 @@
     <input type="text" id="newroom_input" />
     <button onclick="sendNewRoom()">Enter Room Name</button>
     <div id="newroomlog"></div>
+
+    <input type="text" id="joinroom_input" />
+    <button onclick="sendJoinRoom()">Enter Room You Want to Join</button>
+    <div id="joinroomlog"></div>
 </body>
 
 </html>

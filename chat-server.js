@@ -16,50 +16,73 @@ var app = http.createServer(function (req, resp) {
     });
 });
 
-let userlist = [];
-
 app.listen(3456);
 // Do the Socket.IO magic:
 var io = socketio.listen(app);
 
-var usernames = {};
-var rooms = {};
+var usernames = [];
+var rooms = [];
 
-function roomobject(roomname) {
-    this.users = {};
-    this.roomname = roomname;
-    //this.password = password;
+class Roomobject {
+    constructor(roomname, username) {
+        this.users = [];
+        this.roomname = roomname;
+        this.creator = username;
+        //this.password = password;
+    }
 }
 
-let lobby = new roomobject("lobby");
+let lobby = new Roomobject("lobby");
 
 io.sockets.on("connection", function (socket) {
     // This callback runs when a new Socket.IO connection is established.
     console.log("user connected ", socket.id);
     socket.join(lobby.roomname);
+    socket.room = lobby.roomname;
 
     socket.on('message_to_server', function (data) {
         // This callback runs when the server receives a new message from the client.
         console.log("message " + data["username"] + ": " + data["message"]); // log it to the Node.JS output
-        io.to(data.currroom).emit("message_to_client", { message: data["message"], username: data["username"] }) // broadcast the message to other users
+        io.to(socket.room).emit("message_to_client", { message: data["message"], username: data["username"] }) // broadcast the message to other users
     });
 
     // client emits updateusers
     socket.on('username_to_server', function (data) {
         console.log("New user has logged in " + data.username);
         socket.nickname = data["username"];
-        //console.log(socket.nickname);
         usernames[socket.id] = data["username"];
-        //lobby.users[socket.id] = data["username"];
-        io.to(data.currroom).emit('username_to_client', { username: socket.nickname });
+        lobby.users[socket.id] = data["username"];
+        io.sockets.in(data["currentroom"]).emit('username_to_client', { username: socket.nickname, currusers: lobby.users });
     });
 
-    socket.on('newroom_to_server', function (data) {
-        let newroom = new roomobject(data["newroom"]);
-        newroom.users[socket.id] = usernames[socket.id];
-        socket.join(newroom.roomname);
-        io.to(newroom.roomname).emit('newroom_to_client', { roomname: newroom.roomname, users: newroom.users });
+    socket.on('newroom_to_server', function (room) {
+        console.log("newroom to server recieved: " + room);
+        let newroom = new Roomobject(room["newroom"], room["username"]);
+        rooms.push(newroom);
+        newroom.users.push(socket.nickname);
+        socket.leave(socket.room);
+        socket.join(room["newroom"]);
+        socket.room = room["newroom"];
+        io.to(room["newroom"]).emit('newroom_to_client', { roomname: room["newroom"], users: newroom.users });
     });
+
+    socket.on('joinroom_to_server', function (room) {
+        console.log("joinroom to server recieved " + room);
+        let joinroom;
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].roomname === room["joinroom"]) {
+                joinroom = rooms[i];
+            }
+        }
+        console.log("joinroom called " + joinroom);
+        joinroom.users.push(socket.nickname);
+        socket.leave(socket.room);
+        socket.room = joinroom.roomname;
+        socket.join(socket.room);
+
+        io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: joinroom.users });
+
+    })
 
     socket.on('disconnect', function () {
         delete usernames[socket.id];
