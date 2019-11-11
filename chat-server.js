@@ -75,15 +75,41 @@ io.sockets.on("connection", function (socket) {
                 joinroom = rooms[i];
             }
         }
-        console.log("joinroom called " + joinroom);
-        joinroom.users.push(socket.nickname);
-        socket.leave(socket.room);
-        socket.room = joinroom.roomname;
-        socket.join(socket.room);
 
-        io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: joinroom.users });
+        //if room does not exist send them to bad input
+        if (joinroom == null) {
+            console.log("Room does not exist");
+            io.to(socket.room).emit('badinput_to_client'), { data: "Room" };
+        }
+        else {
+            console.log("joinroom called " + joinroom);
+            joinroom.users.push(socket.nickname);
+            socket.leave(socket.room);
+            socket.room = joinroom.roomname;
+            socket.join(socket.room);
 
-    })
+            io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: joinroom.users, username: socket.nickname });
+        }
+
+    });
+
+
+
+    //let ishere = 0;
+    //console.log(joinroom.roomname);
+    //for (let i = 0; i < joinroom.banned.length; i++) {
+    //  if (room["username"] == joinroom.banned[i]) {
+    //    console.log(room["username"] + " has been banned from " + joinroom.roomname);
+    //  ishere = 1;
+    //}
+    //}
+    //if (ishere == 1) {
+    //console.log(socket.nickname + " cannot join this room because you have been banned");
+    // io.to(socket.room).emit('bannedfromroom_to_client'), { roomname: joinroom.roomname, username: socket.nickname };
+    //}
+    // else {
+
+    // if room does exist add them to rooms list of users and 
 
     socket.on('ban_to_server', function (data) {
         console.log("ban to server recieved");
@@ -94,13 +120,50 @@ io.sockets.on("connection", function (socket) {
             }
         }
         banroom.banned.push(data["banned"]);
-        data["banned"].leave(socket.room);
+        //data["banned"].leave(socket.room);
         for (let i = 0; i < banroom.users.length; i++) {
             if (banroom.users[i] == data["banned"]) {
                 banroom.users.splice(i, 1);
             }
         }
         io.to(socket.room).emit('ban_to_client', { roomname: socket.room, banneduser: data["banned"] });
+    });
+
+    socket.on("kick_to_server", function (data) {
+        console.log("kick to server recieved");
+        let kickroom;
+        // get kickroom
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].roomname == data["room"]) {
+                kickroom = rooms[i];
+            }
+        }
+        let checkkickeduser = 0;
+
+        //check if user is in room 
+        for (let i = 0; i < kickroom.users.length; i++) {
+            if (kickroom.users[i] == data["kicked"]) {
+                checkkickeduser = 1;
+            }
+        }
+        console.count("kicked " + data["kicked"]);
+        console.count("checkkickeduser " + checkkickeduser);
+
+        if (checkkickeduser == 1) {
+            console.log("b");
+            if (socket.nickname == data["kicked"]) {
+                console.count("a");
+                socket.leave(socket.room);
+                console.log(data["kicked"] + " has been kicked out of " + kickroom);
+                socket.join(lobby.roomname);
+                console.log(data["kicked"] + " has rejoined the lobby ");
+                io.to(socket.room).emit('kick_to_client'), { data: data["kicked"] };
+            }
+        }
+        else {
+            console.log(data["kicked"] + " is not in " + kickroom);
+            io.to(socket.room).emit('badinput_to_client'), { data: data["kicked"] };
+        }
     });
 
 

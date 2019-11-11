@@ -34,6 +34,7 @@
             let newroom = document.getElementById("newroom_input").value;
             currentroom = newroom;
             document.getElementById("banlog").style.display = 'block';
+            document.getElementById("kicklog").style.display = 'block';
             socketio.emit("newroom_to_server", { username: username, newroom: newroom });
         };
 
@@ -50,26 +51,50 @@
             socketio.emit("ban_to_server", { username: username, banned: banned })
         }
 
+        function sendKick() {
+            console.log("sending you to kick a person");
+            let kicked = document.getElementById("kick_input").value;
+            socketio.emit("kick_to_server", { kicked: kicked, room: currentroom })
+        }
+
         socketio.on("newroom_to_client", function (data) {
             console.log("Roomname" + data["roomname"]);
             console.log("Users" + data["users"]);
-            document.getElementById("newroomlog").appendChild(document.createTextNode(data["roomname"] + data["users"]));
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["roomname"] + " has been created and entereed by " + data["users"]));
         });
 
         socketio.on("joinroom_to_client", function (data) {
-            console.log("Roomname" + data["roomname"]);
-            console.log("Users" + data["users"]);
             document.getElementById("joinroomlog").innerHTML = "";
-            document.getElementById("joinroomlog").appendChild(document.createTextNode(data["roomname"] + data["users"]));
-        })
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["username"] + " has entered " + data["roomname"]));
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode("Users in " + data["roomname"] + " are: " + data["users"]));
+        });
 
         socketio.on("ban_to_client", function (data) {
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode(data["banneduser"] + "has been banned from " + data["roomname"]));
         });
 
-        socketio.on('username_to_client', function (data) {
-            document.getElementById("chatlog").appendChild(document.createTextNode("New user: " + data['username']));
+        socketio.on("badinput_to_client", function (data) {
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["data"] + " does not exist "));
+        });
+
+        socketio.on("kick_to_client", function (data) {
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["data"] + " has been kicked out "));
+        })
+
+        socketio.on("bannedfromroom_to_client", function (data) {
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["username"] + " cannot enter " + data["roomname"] + " because you have been banned "));
+        })
+
+        socketio.on('username_to_client', function (data) {
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode("New user: " + data['username']));
         });
 
         socketio.on("message_to_client", function (data) {
@@ -108,6 +133,11 @@
     <div id="banlog" style="display: none">
         <input type="text" id="ban_input" placeholder="Name of Individ" />
         <button onclick="sendBan()">Enter Individual You Want to Ban</button>
+    </div>
+
+    <div id="kicklog" style="display: none">
+        <input type="text" id="kick_input" placeholder="Name of Individ" />
+        <button onclick="sendKick()">Enter Individual You Want to Kick</button>
     </div>
 </body>
 
