@@ -24,11 +24,12 @@ var usernames = [];
 var rooms = [];
 
 class Roomobject {
-    constructor(roomname, username) {
+    constructor(roomname, username, password) {
         this.users = [];
         this.roomname = roomname;
         this.creator = username;
         this.banned = [];
+        this.password = password;
         //this.password = password;
     }
 }
@@ -52,7 +53,7 @@ io.sockets.on("connection", function (socket) {
         console.log("New user has logged in " + data.username);
         socket.nickname = data["username"];
         usernames[socket.id] = data["username"];
-        lobby.users[socket.id] = data["username"];
+        lobby.users.push(" " + data["username"]);
         io.sockets.in(data["currentroom"]).emit('username_to_client', { username: socket.nickname, currusers: lobby.users });
     });
 
@@ -70,7 +71,7 @@ io.sockets.on("connection", function (socket) {
         }
 
         else {
-            let newroom = new Roomobject(nroom, room["username"]);
+            let newroom = new Roomobject(nroom, room["username"], room["newroompass"]);
             rooms.push(newroom);
             newroom.users.push(socket.nickname);
             socket.leave(socket.room);
@@ -97,12 +98,21 @@ io.sockets.on("connection", function (socket) {
 
         else {
             console.log("joinroom called ");
-            jroom.users.push(socket.nickname);
-            socket.leave(socket.room);
-            socket.room = jroom.roomname;
-            socket.join(socket.room);
 
-            io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: jroom.users, username: socket.nickname });
+            // check if room has a password: 
+            if (jroom.password != room["joinroompass"]) {
+                console.log("Wrong password");
+                io.to(socket.id).emit('incorrectpassword_to_client', { roomname: socket.room, username: socket.nickname });
+            }
+            else {
+                console.log("Correct password");
+                jroom.users.push(" " + socket.nickname);
+                socket.leave(socket.room);
+                socket.room = jroom.roomname;
+                socket.join(socket.room);
+
+                io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: jroom.users, username: socket.nickname });
+            }
         }
 
     });
@@ -182,26 +192,42 @@ io.sockets.on("connection", function (socket) {
         }
     });
 
-    socket.on('private_to_server', function (privateuser, privatemessage) {
-        let from = socket.user;
-        //now need to check if user is in the same room as them
-        /* for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].user === room["joinroom"]) {
-                jroom = rooms[i];
-            }
-        } */
+    // socket.on('private_to_server', function (privateuser, privatemessage) {
+    //     let from = socket.user;
+    //     //now need to check if user is in the same room as them
+    //     /* for (let i = 0; i < rooms.length; i++) {
+    //         if (rooms[i].user === room["joinroom"]) {
+    //             jroom = rooms[i];
+    //         }
+    //     } */
 
-        socket.broadcast.to(socketID[privateuser]).emit('private_to_client', from, privatemessage)
+    //     socket.broadcast.to(socketID[privateuser]).emit('private_to_client', from, privatemessage)
 
-        //if room does not exist send them to bad input
-        
+    //     //if room does not exist send them to bad input
 
-    });
+
+    // });
 
 
     socket.on('disconnect', function () {
+        let currroom;
+        let allusers;
+        let nickname = socket.nickname;
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].roomname == socket.id) {
+                for (let b = 0; b < rooms[i].users.length; ++b) {
+                    if (socket.nickname == rooms[i].users[b]) {
+                        currroom = rooms[i];
+                        allusers = rooms[i].users;
+                        delete rooms[i].users[b];
+                    }
+                }
+            }
+        }
         delete usernames[socket.id];
+        io.to(currroom).emit('disconnect_to_client'), { room: currroom, users: allusers, name: nickname };
         console.log('message_to_client', socket.id + ' has left the chat');
+
     });
 
 });
