@@ -22,6 +22,7 @@ var io = socketio.listen(app);
 
 var usernames = [];
 var rooms = [];
+let myroom;
 
 class Roomobject {
     constructor(roomname, username, password) {
@@ -35,6 +36,7 @@ class Roomobject {
 }
 
 let lobby = new Roomobject("lobby");
+myroom = lobby;
 
 io.sockets.on("connection", function (socket) {
     // This callback runs when a new Socket.IO connection is established.
@@ -61,6 +63,7 @@ io.sockets.on("connection", function (socket) {
         console.log("newroom to server recieved: " + room["newroom"]);
         let check = false;
         let nroom = room["newroom"];
+        // check if new room is alreay a room
         for (let i = 0; i < rooms.length; i++) {
             if (room["newroom"] === rooms[i].roomname) {
                 nroom = null;
@@ -72,6 +75,7 @@ io.sockets.on("connection", function (socket) {
 
         else {
             let newroom = new Roomobject(nroom, room["username"], room["newroompass"]);
+            myroom = newroom;
             rooms.push(newroom);
             newroom.users.push(socket.nickname);
             socket.leave(socket.room);
@@ -84,6 +88,7 @@ io.sockets.on("connection", function (socket) {
     socket.on('joinroom_to_server', function (room) {
         console.log("joinroom to server recieved " + room["joinroom"]);
         let jroom;
+        // check if room exists
         for (let i = 0; i < rooms.length; i++) {
             if (rooms[i].roomname === room["joinroom"]) {
                 jroom = rooms[i];
@@ -106,12 +111,20 @@ io.sockets.on("connection", function (socket) {
             }
             else {
                 console.log("Correct password");
+                for (let i = 0; i < myroom.users; i++) {
+                    if (socket.nickname == myroom.users[i]) {
+                        myroom.users.splice(i, 1);
+                    }
+                }
+                let oldroom = myroom;
                 jroom.users.push(socket.nickname);
                 socket.leave(socket.room);
                 socket.room = jroom.roomname;
                 socket.join(socket.room);
+                myroom = jroom;
 
-                io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: jroom.users, username: socket.nickname });
+                io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room, users: jroom.users, username: socket.nickname });
+                io.to(oldroom.roomname).emit('disconnect_to_client', { roomname: oldroom.roomname, users: oldroom.users, username: socket.nickname });
             }
         }
 
@@ -137,12 +150,13 @@ io.sockets.on("connection", function (socket) {
 
     socket.on('ban_to_server', function (data) {
         console.log("ban to server recieved");
-        let banroom;
-        for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].roomname === socket.room) {
-                banroom = rooms[i];
-            }
-        }
+        let banroom = myroom;
+        // get current room 
+        // for (let i = 0; i < rooms.length; i++) {
+        //     if (rooms[i].roomname === socket.room) {
+        //         banroom = rooms[i];
+        //     }
+        // }
         banroom.banned.push(data["banned"]);
         //data["banned"].leave(socket.room);
         for (let i = 0; i < banroom.users.length; i++) {
@@ -155,25 +169,25 @@ io.sockets.on("connection", function (socket) {
 
     socket.on("kick_to_server", function (data) {
         console.log("kick to server recieved");
-        let kickroom;
+        let kickroom = myroom;
         // get kickroom
-        for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].roomname == data["room"]) {
-                kickroom = rooms[i];
-            }
-        }
-        let checkkickeduser = 0;
+        // for (let i = 0; i < rooms.length; i++) {
+        //     if (rooms[i].roomname == data["room"]) {
+        //         kickroom = rooms[i];
+        //     }
+        // }
+        let checkkickeduser;
 
         //check if user is in room 
         for (let i = 0; i < kickroom.users.length; i++) {
             if (kickroom.users[i] == data["kicked"]) {
-                checkkickeduser = 1;
+                checkkickeduser = tru;
             }
         }
         console.count("kicked " + data["kicked"]);
         console.count("checkkickeduser " + checkkickeduser);
 
-        if (checkkickeduser == 1) {
+        if (checkkickeduser == true) {
             console.log("d");
             console.log("b");
             if (socket.nickname == data["kicked"]) {
@@ -246,6 +260,18 @@ io.sockets.on("connection", function (socket) {
     });
 
 
+    // socket.on('disconnect', function () {
+    //     let currroom = myroom;
+    //     let allusers = myroom.users;
+    //     for (let b = 0; b < currroom.users.length; ++b) {
+    //         if (socket.nickname == currroom.users[b]) {
+    //             delete currroom.users[b];
+    //         }
+    //     }
+    //     delete usernames[socket.id];
+    //     io.to(currroom).emit('disconnect_to_client'), { room: currroom, users: allusers, name: socket.nickname };
+    //     console.log('message_to_client', socket.id + ' has left the chat');
+
     socket.on('disconnect', function () {
         let currroom;
         let allusers;
@@ -262,10 +288,11 @@ io.sockets.on("connection", function (socket) {
             }
         }
         delete usernames[socket.id];
-        io.to(currroom).emit('disconnect_to_client'), { room: currroom, users: allusers, name: nickname };
+        // io.to(currroom).emit('disconnect_to_client'), { room: currroom, users: allusers, name: nickname };
         console.log('message_to_client', socket.id + ' has left the chat');
 
     });
+
 
 });
 

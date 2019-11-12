@@ -131,7 +131,7 @@
         socketio.on('disconnect_to_client', function (data) {
             document.getElementById("h2").innerHTML = "Users: " + data["users"];
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
-            document.getElementById("chatlog").appendChild(document.createTextNode(data["name"] + " has left the room"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["username"] + " has left the room"));
         });
 
         socketio.on("message_to_client", function (data) {
