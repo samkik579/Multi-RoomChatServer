@@ -53,7 +53,7 @@ io.sockets.on("connection", function (socket) {
         console.log("New user has logged in " + data.username);
         socket.nickname = data["username"];
         usernames[socket.id] = data["username"];
-        lobby.users.push(" " + data["username"]);
+        lobby.users.push(data["username"]);
         io.sockets.in(data["currentroom"]).emit('username_to_client', { username: socket.nickname, currusers: lobby.users });
     });
 
@@ -106,7 +106,7 @@ io.sockets.on("connection", function (socket) {
             }
             else {
                 console.log("Correct password");
-                jroom.users.push(" " + socket.nickname);
+                jroom.users.push(socket.nickname);
                 socket.leave(socket.room);
                 socket.room = jroom.roomname;
                 socket.join(socket.room);
@@ -192,21 +192,58 @@ io.sockets.on("connection", function (socket) {
         }
     });
 
-    // socket.on('private_to_server', function (privateuser, privatemessage) {
-    //     let from = socket.user;
+    // socket.on('private_to_server', function (data) {
+    //     //let from = socket.user;
     //     //now need to check if user is in the same room as them
-    //     /* for (let i = 0; i < rooms.length; i++) {
-    //         if (rooms[i].user === room["joinroom"]) {
-    //             jroom = rooms[i];
+    //     let check;
+    //     let r;
+    //     for (let i = 0; i < rooms.length; i++) {
+    //         if (rooms[i].roomname === socket.room) {
+    //             r = rooms[i];
     //         }
-    //     } */
+    //     }
+    //     console.log(r.users);
+    //     for (let b = 0; b < r.users.length; b++) {
+    //         console.log(r.users[b]);
+    //         if (r.users[b] == data["privateuser"]) {
+    //             check = true;
+    //         }
+    //     }
 
-    //     socket.broadcast.to(socketID[privateuser]).emit('private_to_client', from, privatemessage)
+    //     let touserid;
+    //     if (check != null) {
+    //         console.log("ahhhh");
+    //         for (let i = 0; i < usernames.length; ++i) {
+    //             if (usernames[i] == data["privateuser"]) {
+    //                 touserid = i;
+    //                 console.log(touserid);
+    //             }
+    //         }
+    //         io.to(socket.touserid).emit('private_to_client'), { from: socket.nickname, to: data["privateuser"] };
+    //     }
+    //     else {
+    //         io.to(socket.id).emit('badinput_to_client'), { data: data["privateuser"] };
+    //     }
+
 
     //     //if room does not exist send them to bad input
-
-
     // });
+
+    socket.on('private_to_server', function (privateuser, privatemessage) {
+        let from = socket.user;
+        //now need to check if user is in the same room as them
+        /* for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].user === room["joinroom"]) {
+                jroom = rooms[i];
+            }
+        } */
+
+        socket.broadcast.to(socketID[privateuser]).emit('private_to_client', from, privatemessage)
+
+        //if room does not exist send them to bad input
+
+
+    });
 
 
     socket.on('disconnect', function () {

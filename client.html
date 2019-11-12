@@ -66,6 +66,7 @@
             console.log("sending private messsage to a user");
             let privateuser = document.getElementById("private_user_input").value;
             let privatemessage = document.getElementById("private_message_input").value;
+            console.log("currentroom");
             socketio.emit("private_to_server", { privateuser: privateuser, privatemessage: privatemessage, room: currentroom })
         }
 
