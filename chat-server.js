@@ -57,38 +57,52 @@ io.sockets.on("connection", function (socket) {
     });
 
     socket.on('newroom_to_server', function (room) {
-        console.log("newroom to server recieved: " + room);
-        let newroom = new Roomobject(room["newroom"], room["username"]);
-        rooms.push(newroom);
-        newroom.users.push(socket.nickname);
-        socket.leave(socket.room);
-        socket.join(room["newroom"]);
-        socket.room = room["newroom"];
-        io.to(room["newroom"]).emit('newroom_to_client', { roomname: room["newroom"], users: newroom.users });
+        console.log("newroom to server recieved: " + room["newroom"]);
+        let check = false;
+        let nroom = room["newroom"];
+        for (let i = 0; i < rooms.length; i++) {
+            if (room["newroom"] === rooms[i].roomname) {
+                nroom = null;
+            }
+        }
+        if (nroom == null) {
+            io.to(socket.id).emit('room_already_exists_to_client', { roomname: room["newroom"], currroom: socket.room });
+        }
+
+        else {
+            let newroom = new Roomobject(nroom, room["username"]);
+            rooms.push(newroom);
+            newroom.users.push(socket.nickname);
+            socket.leave(socket.room);
+            socket.join(room["newroom"]);
+            socket.room = room["newroom"];
+            io.to(room["newroom"]).emit('newroom_to_client', { roomname: room["newroom"], users: newroom.users });
+        }
     });
 
     socket.on('joinroom_to_server', function (room) {
-        console.log("joinroom to server recieved " + room);
-        let joinroom;
+        console.log("joinroom to server recieved " + room["joinroom"]);
+        let jroom;
         for (let i = 0; i < rooms.length; i++) {
             if (rooms[i].roomname === room["joinroom"]) {
-                joinroom = rooms[i];
+                jroom = rooms[i];
             }
         }
 
         //if room does not exist send them to bad input
-        if (joinroom == null) {
-            console.log("Room does not exist");
-            io.to(socket.room).emit('badinput_to_client'), { data: "Room" };
+        if (jroom == null) {
+            console.log("Room does not exist " + room["joinroom"]);
+            io.to(socket.room).emit('badinput_to_client'), { room: room["joinroom"] };
         }
+
         else {
-            console.log("joinroom called " + joinroom);
-            joinroom.users.push(socket.nickname);
+            console.log("joinroom called ");
+            jroom.users.push(socket.nickname);
             socket.leave(socket.room);
-            socket.room = joinroom.roomname;
+            socket.room = jroom.roomname;
             socket.join(socket.room);
 
-            io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: joinroom.users, username: socket.nickname });
+            io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room + ": ", users: jroom.users, username: socket.nickname });
         }
 
     });
@@ -150,6 +164,7 @@ io.sockets.on("connection", function (socket) {
         console.count("checkkickeduser " + checkkickeduser);
 
         if (checkkickeduser == 1) {
+            console.log("d");
             console.log("b");
             if (socket.nickname == data["kicked"]) {
                 console.count("a");
@@ -161,6 +176,7 @@ io.sockets.on("connection", function (socket) {
             }
         }
         else {
+            console.log("b")
             console.log(data["kicked"] + " is not in " + kickroom);
             io.to(socket.room).emit('badinput_to_client'), { data: data["kicked"] };
         }
