@@ -182,6 +182,22 @@ io.sockets.on("connection", function (socket) {
         }
     });
 
+    socket.on('private_to_server', function (privateuser, privatemessage) {
+        let from = socket.user;
+        //now need to check if user is in the same room as them
+        /* for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].user === room["joinroom"]) {
+                jroom = rooms[i];
+            }
+        } */
+
+        socket.broadcast.to(socketID[privateuser]).emit('private_to_client', from, privatemessage)
+
+        //if room does not exist send them to bad input
+        
+
+    });
+
 
     socket.on('disconnect', function () {
         delete usernames[socket.id];

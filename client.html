@@ -58,11 +58,19 @@
             socketio.emit("kick_to_server", { kicked: kicked, room: currentroom })
         }
 
+        function sendPrivate() {
+            console.log("sending private messsage to a user");
+            let privateuser = document.getElementById("private_user_input").value;
+            let privatemessage = document.getElementById("private_message_input").value;
+            socketio.emit("private_to_server", { privateuser: privateuser, privatemessage: privatemessage, room: currentroom })
+        }
+
         socketio.on("newroom_to_client", function (data) {
             console.log("Roomname" + data["roomname"]);
             console.log("Users" + data["users"]);
             document.getElementById("banlog").style.display = 'block';
             document.getElementById("kicklog").style.display = 'block';
+            document.getElementById("privatelog").style.display= 'block';
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode(data["roomname"] + " has been created and entereed by " + data["users"]));
         });
@@ -111,6 +119,11 @@
             document.getElementById("chatlog").appendChild(document.createTextNode(data['username'] + ": " + data['message']));
         });
 
+        socketio.on("private_to_client", function (from, privatemessage) {
+            document.getElementById("privatelog").appendChild(document.createElement("hr"));
+            document.getElementById("privatelog").appendChild(document.createTextNode(from + " has sent a private message: " + message));
+        });
+
 
 
     </script>
@@ -146,6 +159,12 @@
     <div id="kicklog" style="display: none">
         <input type="text" id="kick_input" />
         <button onclick="sendKick()">Enter Individual You Want to Kick</button>
+    </div>
+
+    <div id="privatelog" style="display: none">
+        <input type="text" id="private_user_input" placeholder="Username" />
+        <input type="text" id="private_message_input" placeholder="Message"/>
+        <button onclick="sendPrivate()">Enter User You Want to Send Private Message to and Message </button>
     </div>
 </body>
 
