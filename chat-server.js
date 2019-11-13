@@ -25,17 +25,17 @@ var rooms = [];
 let myroom;
 
 class Roomobject {
-    constructor(roomname, username, password) {
+    constructor(roomname, password) {
         this.users = [];
         this.roomname = roomname;
-        this.creator = username;
+        //this.creator = username;
         this.banned = [];
         this.password = password;
         //this.password = password;
     }
 }
 
-let lobby = new Roomobject("lobby");
+let lobby = new Roomobject("Lobby", "");
 myroom = lobby;
 
 io.sockets.on("connection", function (socket) {
@@ -52,11 +52,22 @@ io.sockets.on("connection", function (socket) {
 
     // client emits updateusers
     socket.on('username_to_server', function (data) {
-        console.log("New user has logged in " + data.username);
-        socket.nickname = data["username"];
-        usernames[socket.id] = data["username"];
-        lobby.users.push(data["username"]);
-        io.sockets.in(data["currentroom"]).emit('username_to_client', { username: socket.nickname, currusers: lobby.users });
+        let check;
+        if (usernames.hasOwnProperty(data["username"])) {
+            check = true;
+        }
+
+        if (check != null) {
+            io.to(socket.room).emit('badinput_to_client'), { username: data.username };
+        }
+        else {
+            socket.nickname = data["username"];
+            console.log("c" + socket.nickname);
+            usernames[socket.nickname] = socket.id;
+            lobby.users.push(data["username"]);
+            io.sockets.in(socket.id).emit('username_to_client', { username: socket.nickname, currusers: lobby.users, allrooms: rooms });
+
+        }
     });
 
     socket.on('newroom_to_server', function (room) {
@@ -74,7 +85,7 @@ io.sockets.on("connection", function (socket) {
         }
 
         else {
-            let newroom = new Roomobject(nroom, room["username"], room["newroompass"]);
+            let newroom = new Roomobject(nroom, room["newroompass"]);
             myroom = newroom;
             rooms.push(newroom);
             newroom.users.push(socket.nickname);
@@ -104,18 +115,12 @@ io.sockets.on("connection", function (socket) {
         else {
             console.log("joinroom called ");
 
-            // check if room has a password: 
+            // check if room has a password:
             if (jroom.password != room["joinroompass"]) {
                 console.log("Wrong password");
                 io.to(socket.id).emit('incorrectpassword_to_client', { roomname: socket.room, username: socket.nickname });
             }
             else {
-                console.log("Correct password");
-                for (let i = 0; i < myroom.users; i++) {
-                    if (socket.nickname == myroom.users[i]) {
-                        myroom.users.splice(i, 1);
-                    }
-                }
                 let oldroom = myroom;
                 jroom.users.push(socket.nickname);
                 socket.leave(socket.room);
@@ -124,29 +129,10 @@ io.sockets.on("connection", function (socket) {
                 myroom = jroom;
 
                 io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room, users: jroom.users, username: socket.nickname });
-                io.to(oldroom.roomname).emit('disconnect_to_client', { roomname: oldroom.roomname, users: oldroom.users, username: socket.nickname });
             }
         }
 
     });
-
-
-
-    //let ishere = 0;
-    //console.log(joinroom.roomname);
-    //for (let i = 0; i < joinroom.banned.length; i++) {
-    //  if (room["username"] == joinroom.banned[i]) {
-    //    console.log(room["username"] + " has been banned from " + joinroom.roomname);
-    //  ishere = 1;
-    //}
-    //}
-    //if (ishere == 1) {
-    //console.log(socket.nickname + " cannot join this room because you have been banned");
-    // io.to(socket.room).emit('bannedfromroom_to_client'), { roomname: joinroom.roomname, username: socket.nickname };
-    //}
-    // else {
-
-    // if room does exist add them to rooms list of users and 
 
     socket.on('ban_to_server', function (data) {
         console.log("ban to server recieved");
@@ -170,39 +156,38 @@ io.sockets.on("connection", function (socket) {
     socket.on("kick_to_server", function (data) {
         console.log("kick to server recieved");
         let kickroom = myroom;
-        // get kickroom
-        // for (let i = 0; i < rooms.length; i++) {
-        //     if (rooms[i].roomname == data["room"]) {
-        //         kickroom = rooms[i];
-        //     }
-        // }
         let checkkickeduser;
+        console.log(kickroom.users);
 
         //check if user is in room 
         for (let i = 0; i < kickroom.users.length; i++) {
             if (kickroom.users[i] == data["kicked"]) {
-                checkkickeduser = tru;
+                delete kickroom.users[i];
+                checkkickeduser = true;
             }
         }
         console.count("kicked " + data["kicked"]);
         console.count("checkkickeduser " + checkkickeduser);
 
-        if (checkkickeduser == true) {
-            console.log("d");
-            console.log("b");
-            if (socket.nickname == data["kicked"]) {
-                console.count("a");
-                socket.leave(socket.room);
-                console.log(data["kicked"] + " has been kicked out of " + kickroom);
-                socket.join(lobby.roomname);
-                console.log(data["kicked"] + " has rejoined the lobby ");
-                io.to(socket.room).emit('kick_to_client'), { data: data["kicked"] };
-            }
+        if (checkkickeduser != null) {
+            console.log(kickroom.users);
+            let socketkick = io.sockets.sockets[usernames[data["kicked"]]];
+            console.log(socketkick);
+            //socketkick = usernames[data["kicked"]];
+            socketkick.leave(kickroom.roomname);
+            console.log(kickroom.roomname);
+            socketkick.room = lobby.roomname;
+            socketkick.join(socketkick.room);
+            console.log(socketkick.room);
+            myroom = lobby;
+
+            io.to(socketkick.id).emit('kick_to_client', { currentroom: lobby.roomname, users: lobby.users, kickeduser: data["kicked"] });
+            // io.to(socketkick.room).emit('kick_to_client'), { data: data["kicked"], roomname: socketkick.roomname, users: currroom.users };
         }
         else {
-            console.log("b")
+            console.log("DONT ENTER HERE");
             console.log(data["kicked"] + " is not in " + kickroom);
-            io.to(socket.room).emit('badinput_to_client'), { data: data["kicked"] };
+            io.to(socket.room).emit('badinput_to_client'), { data: data["kicked"], users: kickroom.users, lobby: lobby.users };
         }
     });
 
@@ -210,14 +195,7 @@ io.sockets.on("connection", function (socket) {
     //     //let from = socket.user;
     //     //now need to check if user is in the same room as them
     //     let check;
-    //     let r;
-    //     for (let i = 0; i < rooms.length; i++) {
-    //         if (rooms[i].roomname === socket.room) {
-    //             r = rooms[i];
-    //         }
-    //     }
-    //     console.log(r.users);
-    //     for (let b = 0; b < r.users.length; b++) {
+    //     for (let b = 0; b < myroom.users.length; b++) {
     //         console.log(r.users[b]);
     //         if (r.users[b] == data["privateuser"]) {
     //             check = true;
@@ -243,16 +221,16 @@ io.sockets.on("connection", function (socket) {
     //     //if room does not exist send them to bad input
     // });
 
-    socket.on('private_to_server', function (privateuser, privatemessage) {
-        let from = socket.user;
+    socket.on('private_to_server', function (data) {
+        let socketprivate = io.sockets.sockets[usernames[data["privateuser"]]];
         //now need to check if user is in the same room as them
         /* for (let i = 0; i < rooms.length; i++) {
             if (rooms[i].user === room["joinroom"]) {
                 jroom = rooms[i];
             }
         } */
-
-        socket.broadcast.to(socketID[privateuser]).emit('private_to_client', from, privatemessage)
+        console.log(data["privatemessage"]);
+        io.to(socketprivate.id).emit('private_to_client', { from: socket.nickname, to: data["privateuser"], message: data["privatemessage"] });
 
         //if room does not exist send them to bad input
 
