@@ -9,17 +9,29 @@
     <script type="text/javascript">
 
 
-        var socketio = io.connect();
-        var username = " ";
-        var id = " ";
-        var currentroom = "lobby";
+        let socketio = io.connect();
+        let username = " ";
+        let id = " ";
+        let currentroom = "lobby";
 
 
         console.log("Connected!");
 
         function sendMessage() {
-            var msg = document.getElementById("message_input").value;
-            socketio.emit("message_to_server", { message: msg, username: username, currentroom: currentroom });
+            let msg = document.getElementById("message_input").value;
+            if (msg == "*leaveroom") {
+                console.log("hello");
+                socketio.emit("leaveroom");
+            }
+            else {
+                socketio.emit("message_to_server", { message: msg, username: username, currentroom: currentroom });
+            }
+        };
+
+        function sendCensor() {
+            console.log("sending you to censor words");
+            let censored = document.getElementById("censor_input").value;
+            socket.emit("message_to_server", { censored: censored });
         };
 
         function sendUsername() {
@@ -47,7 +59,7 @@
         function sendBan() {
             console.log("sending you to ban a person");
             let banned = document.getElementById("ban_input").value;
-            socketio.emit("ban_to_server", { username: username, banned: banned })
+            socketio.emit("ban_to_server", { banned: banned })
         }
 
         function sendKick() {
@@ -55,6 +67,8 @@
             let kicked = document.getElementById("kick_input").value;
             socketio.emit("kick_to_server", { kicked: kicked, room: currentroom })
         }
+
+
 
         function sendPrivate() {
             console.log("sending private messsage to a user");
@@ -92,6 +106,23 @@
             document.getElementById("chatlog").appendChild(document.createTextNode("Users in " + data["roomname"] + " are: " + data["users"]));
         });
 
+        socketio.on("backtolobby_to_client", function (data) {
+            document.getElementById("h1").innerHTML = "Current Room: Lobby";
+            document.getElementById("userlog").style.display = 'none';
+            document.getElementById("newroomlog").style.display = 'block';
+            document.getElementById("joinroomlog").style.display = 'block';
+            document.getElementById("sendmessage").style.display = 'block';
+            document.getElementById("chatlog").style.display = 'block';
+            document.getElementById("banlog").style.display = 'none';
+            document.getElementById("kicklog").style.display = 'none';
+            document.getElementById("privatelog").style.display = 'none';
+            document.getElementById("h2").innerHTML = "";
+            document.getElementById("h2").innerHTML = "Users: " + data["users"];
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode("User is Back: " + data['username']));
+        });
+
+
         socketio.on("ban_to_client", function (data) {
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode(data["banneduser"] + "has been banned from " + data["roomname"]));
@@ -119,8 +150,14 @@
         })
 
         socketio.on("bannedfromroom_to_client", function (data) {
+            document.getElementById("h1").innerHTML = "Current Room: Lobby";
+            document.getElementById("joinroomlog").style.display = 'block';
+            document.getElementById("newroomlog").style.display = 'block';
+            document.getElementById("privatelog").style.display = 'none';
+            document.getElementById("h2").innerHTML = "";
+            document.getElementById("h2").innerHTML = "Users: " + data["users"];
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
-            document.getElementById("chatlog").appendChild(document.createTextNode(data["username"] + " cannot enter " + data["roomname"] + " because you have been banned "));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data["banneduser"] + " cannot enter " + data["currentroom"] + " because you have been banned "));
         })
 
         socketio.on('incorrectpassword_to_client', function (data) {
@@ -144,10 +181,8 @@
         });
 
         socketio.on('disconnect_to_client', function (data) {
-            document.getElementById("h2").innerHTML = "";
-            document.getElementById("h2").innerHTML = "Users: " + data["users"];
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
-            // document.getElementById("chatlog").appendChild(document.createTextNode(data["username"] + " has left " + data["room"]));
+            document.getElementById("chatlog").appendChild(document.createTextNode("You are already in the lobby."));
         });
 
         socketio.on("message_to_client", function (data) {
