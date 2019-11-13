@@ -3,6 +3,8 @@
 
 457601
 
+NOTE: When you clone the module folder, before doing NPM install please cd into the Group folder, which is a folder within the module folder you will clone. Once you have entered the group folder you may do NPM install.  
+
 
 Creative Portion: 
 1. If *message is typed, then the user is given info on how to send a private message
