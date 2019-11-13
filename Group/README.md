@@ -3,7 +3,9 @@
 
 457601
 
-NOTE: When you clone the module folder, before doing NPM install please cd into the Group folder, which is a folder within the module folder you will clone. Once you have entered the group folder you may do NPM install.  
+***NOTE: When you clone the module folder, before doing NPM install please cd into the Group folder, which is a folder within the module folder you will clone. Once you have entered the group folder you may do NPM install. 
+
+***NOTE: When things happen such as private message, or kick, or ban - all of these are working properly. However, the person who does the kick/ban/dm is not getting a message that this occured, but for the person who is getting kicked/banned/dm it is fully working. So our functionalities are fully orking its just that the person who does the action isnt being notified they were successful. 
 
 
 Creative Portion: 
