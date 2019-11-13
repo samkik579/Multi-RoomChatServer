@@ -82,8 +82,10 @@
             console.log("Roomname" + data["roomname"]);
             console.log("Users" + data["users"]);
             document.getElementById("h1").innerHTML = "Current Room: " + data["roomname"];
+            document.getElementById("h3").innerHTML = "Username: " + username;
             document.getElementById("h2").innerHTML = "";
             document.getElementById("h2").innerHTML = "Users " + data["users"];
+            document.getElementById("h4").innerHTML = "Rooms " + data["allrooms"];
             document.getElementById("banlog").style.display = 'block';
             document.getElementById("kicklog").style.display = 'block';
             document.getElementById("privatelog").style.display = 'block';
@@ -95,8 +97,10 @@
 
         socketio.on("joinroom_to_client", function (data) {
             document.getElementById("h1").innerHTML = "Current Room: " + data["roomname"];
+            document.getElementById("h3").innerHTML = "Username: " + username;
             document.getElementById("h2").innerHTML = "";
             document.getElementById("h2").innerHTML = "Users " + data["users"];
+            document.getElementById("h4").innerHTML = "Rooms " + data["allrooms"];
             document.getElementById("joinroomlog").style.display = 'none';
             document.getElementById("privatelog").style.display = 'block';
             document.getElementById("newroomlog").style.display = 'none';
@@ -108,6 +112,7 @@
 
         socketio.on("backtolobby_to_client", function (data) {
             document.getElementById("h1").innerHTML = "Current Room: Lobby";
+            document.getElementById("h3").innerHTML = "Username: " + username;
             document.getElementById("userlog").style.display = 'none';
             document.getElementById("newroomlog").style.display = 'block';
             document.getElementById("joinroomlog").style.display = 'block';
@@ -140,22 +145,26 @@
 
         socketio.on("kick_to_client", function (data) {
             document.getElementById("h1").innerHTML = "Current Room: Lobby";
+            document.getElementById("h3").innerHTML = "Username: " + username;
             document.getElementById("joinroomlog").style.display = 'block';
             document.getElementById("newroomlog").style.display = 'block';
             document.getElementById("privatelog").style.display = 'none';
             document.getElementById("h2").innerHTML = "";
             document.getElementById("h2").innerHTML = "Users: " + data["users"];
+            document.getElementById("h4").innerHTML = "Rooms " + data["allrooms"];
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode(data["kickeduser"] + " has been kicked out"));
         })
 
         socketio.on("bannedfromroom_to_client", function (data) {
             document.getElementById("h1").innerHTML = "Current Room: Lobby";
+            document.getElementById("h3").innerHTML = "Username: " + username;
             document.getElementById("joinroomlog").style.display = 'block';
             document.getElementById("newroomlog").style.display = 'block';
             document.getElementById("privatelog").style.display = 'none';
             document.getElementById("h2").innerHTML = "";
             document.getElementById("h2").innerHTML = "Users: " + data["users"];
+            document.getElementById("h4").innerHTML = "Rooms " + data["allrooms"];
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode(data["banneduser"] + " cannot enter " + data["currentroom"] + " because you have been banned "));
         })
@@ -168,6 +177,7 @@
         socketio.on('username_to_client', function (data) {
             console.log(data);
             document.getElementById("h1").innerHTML = "Current Room: Lobby";
+            document.getElementById("h3").innerHTML = "Username: " + username;
             document.getElementById("userlog").style.display = 'none';
             document.getElementById("newroomlog").style.display = 'block';
             document.getElementById("joinroomlog").style.display = 'block';
@@ -175,7 +185,7 @@
             document.getElementById("chatlog").style.display = 'block';
             document.getElementById("h2").innerHTML = "";
             document.getElementById("h2").innerHTML = "Users: " + data["currusers"];
-            document.getElementById("h3").innterHTML = "Active Rooms: " + data["allrooms"];
+            document.getElementById("h4").innerHTML = "Rooms " + data["allrooms"];
             document.getElementById("chatlog").appendChild(document.createElement("hr"));
             document.getElementById("chatlog").appendChild(document.createTextNode("New user: " + data['username']));
         });
@@ -198,7 +208,6 @@
         });
 
 
-
     </script>
 </head>
 
@@ -206,6 +215,7 @@
     <h1 id="h1">My ChatRoom </h1>
     <h2 id="h2"></h2>
     <h3 id="h3"></h3>
+    <h4 id="h4"></h4>
 
     <style>
         div {
@@ -243,7 +253,9 @@
         }
 
         h1,
-        h2 {
+        h2,
+        h3,
+        h4 {
             font-family: Arial, Helvetica, sans-serif;
         }
     </style>

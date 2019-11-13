@@ -20,8 +20,9 @@ app.listen(3456);
 // Do the Socket.IO magic:
 var io = socketio.listen(app);
 let printusers = [];
-var usernames = [];
-var rooms = [];
+let usernames = [];
+let rooms = [];
+let roomnames = [];
 let myroom;
 
 class Roomobject {
@@ -37,6 +38,8 @@ class Roomobject {
 
 let lobby = new Roomobject("Lobby", "");
 myroom = lobby;
+
+roomnames.push("lobby");
 
 io.sockets.on("connection", function (socket) {
     // This callback runs when a new Socket.IO connection is established.
@@ -82,7 +85,7 @@ io.sockets.on("connection", function (socket) {
             console.log("c " + socket.nickname);
             usernames[socket.nickname] = socket.id;
             lobby.users.push(data["username"]);
-            io.sockets.in(socket.id).emit('username_to_client', { username: socket.nickname, currusers: lobby.users, allrooms: rooms });
+            io.sockets.in(socket.id).emit('username_to_client', { username: socket.nickname, currusers: lobby.users, allrooms: roomnames });
 
         }
     });
@@ -98,18 +101,19 @@ io.sockets.on("connection", function (socket) {
             }
         }
         if (nroom == null) {
-            io.to(socket.id).emit('room_already_exists_to_client', { roomname: room["newroom"], currroom: socket.room });
+            io.to(socket.id).emit('room_already_exists_to_client', { roomname: room["newroom"], currroom: socket.room, allrooms: roomnames });
         }
 
         else {
             let newroom = new Roomobject(nroom, room["newroompass"]);
             myroom = newroom;
             rooms.push(newroom);
+            roomnames.push(newroom.roomname);
             newroom.users.push(socket.nickname);
             socket.leave(socket.room);
             socket.join(room["newroom"]);
             socket.room = room["newroom"];
-            io.to(room["newroom"]).emit('newroom_to_client', { roomname: room["newroom"], users: newroom.users });
+            io.to(room["newroom"]).emit('newroom_to_client', { roomname: room["newroom"], users: newroom.users, allrooms: roomnames });
         }
     });
 
@@ -136,7 +140,7 @@ io.sockets.on("connection", function (socket) {
             // check if room has a password:
             if (jroom.password != room["joinroompass"]) {
                 console.log("Wrong password");
-                io.to(socket.id).emit('incorrectpassword_to_client', { roomname: socket.room, username: socket.nickname });
+                io.to(socket.id).emit('incorrectpassword_to_client', { roomname: socket.room, username: socket.nickname, allrooms: roomnames });
             }
             else {
                 // check if user has been banned from room: 
@@ -144,7 +148,7 @@ io.sockets.on("connection", function (socket) {
                     if (jroom.banned[i] == socket.nickname) {
                         console.log("You have been banned from this room and can't join");
                         b = false;
-                        io.to(socket.id).emit('bannedfromroom_to_client', { currentroom: jroom.roomname, users: lobby.users, banneduser: socket.nickname });
+                        io.to(socket.id).emit('bannedfromroom_to_client', { currentroom: jroom.roomname, users: lobby.users, banneduser: socket.nickname, allrooms: roomnames });
                     }
                 }
                 if (b != false) {
@@ -155,7 +159,7 @@ io.sockets.on("connection", function (socket) {
                     socket.join(socket.room);
                     myroom = jroom;
 
-                    io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room, users: jroom.users, username: socket.nickname });
+                    io.to(socket.room).emit('joinroom_to_client', { roomname: socket.room, users: jroom.users, username: socket.nickname, allrooms: roomnames });
 
                 }
 
@@ -195,7 +199,7 @@ io.sockets.on("connection", function (socket) {
                 socketbanned.join(socketbanned.room);
                 console.log(socketbanned.room);
 
-                io.to(socketbanned.id).emit('bannedfromroom_to_client', { currentroom: banroom.roomname, users: lobby.users, banneduser: data["banned"] });
+                io.to(socketbanned.id).emit('bannedfromroom_to_client', { currentroom: banroom.roomname, users: lobby.users, banneduser: data["banned"], allrooms: roomnames });
                 // io.to(socketkick.room).emit('kick_to_client'), { data: data["kicked"], roomname: socketkick.roomname, users: currroom.users };
             }
         }
@@ -233,7 +237,7 @@ io.sockets.on("connection", function (socket) {
             socketkick.join(socketkick.room);
             console.log(socketkick.room);
 
-            io.to(socketkick.id).emit('kick_to_client', { currentroom: lobby.roomname, users: lobby.users, kickeduser: data["kicked"] });
+            io.to(socketkick.id).emit('kick_to_client', { currentroom: lobby.roomname, users: lobby.users, kickeduser: data["kicked"], allrooms: roomnames });
             // io.to(socketkick.room).emit('kick_to_client'), { data: data["kicked"], roomname: socketkick.roomname, users: currroom.users };
         }
         else {
