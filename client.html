@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 
 
 <head>
     <title> ChatRoom </title>
-    <link rel="stylesheet" href="stylesheet.css" type="text/css">
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript">
 
@@ -209,17 +209,10 @@
 
 
     </script>
-</head>
-
-<body>
-    <h1 id="h1">My ChatRoom </h1>
-    <h2 id="h2"></h2>
-    <h3 id="h3"></h3>
-    <h4 id="h4"></h4>
 
     <style>
         div {
-            width: 300;
+            width: 400px;
             padding: 10px 5px;
             display: inline-block;
             color: black;
@@ -259,6 +252,15 @@
             font-family: Arial, Helvetica, sans-serif;
         }
     </style>
+</head>
+
+<body>
+    <h1 id="h1">My ChatRoom </h1>
+    <h2 id="h2"></h2>
+    <h3 id="h3"></h3>
+    <h4 id="h4"></h4>
+
+
 
     <div id="chatlog">
         <input type="text" id="message_input" />
@@ -272,14 +274,14 @@
 
     <div id="newroomlog" style="display:none">
         <input type="text" id="newroom_input" placeholder="Enter room name" />
-        <input type="text" id="newroompass_input" placeholder="Enter room password (optional)"" />
+        <input type="text" id="newroompass_input" placeholder="Enter room password (optional)" />
         <button onclick=" sendNewRoom()"> Enter Room You Want to Create </button>
 
     </div>
 
     <div id="joinroomlog" style="display: none">
         <input type="text" id="joinroom_input" />
-        <input type="text" id="joinroompass_input" placeholder="Enter room password (if private)"" />
+        <input type="text" id="joinroompass_input" placeholder="Enter room password (if private)" />
         <button onclick=" sendJoinRoom()">Enter Room You Want to Join</button>
     </div>
 
@@ -299,7 +301,6 @@
         <button onclick="sendPrivate()">Enter User You Want to Send Private Message to and Message </button>
     </div>
 
-    </div>
 
 </body>
 
