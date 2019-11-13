@@ -1,0 +1,15 @@
+{
+  "name": "6-group",
+  "version": "1.0.0",
+  "description": "455207",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^1.19.4",
+    "socket.io": "^2.3.0"
+  }
+}

@@ -85,7 +85,7 @@ io.sockets.on("connection", function (socket) {
             console.log("c " + socket.nickname);
             usernames[socket.nickname] = socket.id;
             lobby.users.push(data["username"]);
-            io.sockets.in(socket.id).emit('username_to_client', { username: socket.nickname, currusers: lobby.users, allrooms: roomnames });
+            io.sockets.in(socket.room).emit('username_to_client', { username: socket.nickname, currusers: lobby.users, allrooms: roomnames });
 
         }
     });
